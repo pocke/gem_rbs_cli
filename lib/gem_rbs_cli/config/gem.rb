@@ -1,6 +1,6 @@
 module GemRbsCli
   class Config
-    Gem = Struct.new(:source, :name, :version, :branch, keyword_init: true) do
+    Gem = Struct.new(:source, :name, :version, :branch, :files, keyword_init: true) do
       def owner
         source.split('/')[0]
       end

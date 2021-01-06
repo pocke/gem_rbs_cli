@@ -47,6 +47,7 @@ module GemRbsCli
           version ||= gem['version']
           source = gem['source'] || DEFAULT_SOURCE
           branch = gem['branch'] || DEFAULT_BRANCH
+          files = gem['files']
         else
           raise "Unexpected: #{gem}"
         end
@@ -54,7 +55,7 @@ module GemRbsCli
         raise Errors::Error.new("Gem name must be specified") unless name
         raise Errors::Error.new("Gem version must be specified") unless version
 
-        block.call Gem.new(name: name, version: version, source: source, branch: branch)
+        block.call Gem.new(name: name, version: version, source: source, branch: branch, files: files)
       end
     end
   end

@@ -1,16 +1,35 @@
 module GemRbsCli
   module GithubClient
+    USER_AGENT = 'https://github.com/pocke/gem_rbs_cli'
+
     def self.new(github_token:)
       if github_token
         V4.new(github_token: github_token)
       else
-        Curl.new
+        GithubUserContentCom.new
       end
     end
 
-    class Curl
+    class GithubUserContentCom
       def fetch_rbs(gems, &block)
-        raise NotImplementedError
+        http = Net::HTTP.new('raw.githubusercontent.com', 443)
+        http.use_ssl = true
+        header = {
+          'User-Agent' => USER_AGENT,
+        }
+
+        gems.each do |gem|
+          files = gem.files.map do |file|
+            path = "#{gem.source}/#{gem.branch}/gems/#{gem.name}/#{gem.version}/#{file}"
+            resp = http.request_get(path, header)
+            # TODO: error handiling
+            sleep 0.1
+            content = resp.body
+            { content: content, fname: file }
+          end
+
+          block.call gem, files
+        end
       end
     end
 
@@ -76,7 +95,7 @@ module GemRbsCli
         header = {
           "Authorization" => "Bearer #{github_token}",
           'Content-Type' => 'application/json',
-          'User-Agent' => 'gem_rbs client',
+          'User-Agent' => USER_AGENT,
         }
         resp = http.request_post('/graphql', JSON.generate(query), header)
         JSON.parse(resp.body, symbolize_names: true).tap do |content|
