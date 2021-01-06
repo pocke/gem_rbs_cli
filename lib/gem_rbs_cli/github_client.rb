@@ -46,6 +46,7 @@ module GemRbsCli
 
         gems.each do |gem|
           path = "#{gem.branch}:gems/#{gem.name}/#{gem.version}"
+          # TODO: dig directories recursively
           builder.add(gem, <<~GRAPHQL, { 'path' => path, 'owner': gem.owner, 'repo_name' => gem.repo_name })
             repository(owner: $owner, name: $repo_name) {
               object(expression: $path) {
@@ -69,7 +70,6 @@ module GemRbsCli
 
         gems.each do |gem|
           r = builder.fetch_from(resp[:data], gem)
-          binding.irb
           files = r.dig(:object, :entries).map do |entry|
             fname = entry[:name]
             if fname.end_with?('.rbs')

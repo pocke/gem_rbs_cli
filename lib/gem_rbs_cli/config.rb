@@ -1,9 +1,4 @@
 module GemRbsCli
-  CONFIG_PATH = Pathname('.gem_rbs.yaml')
-  LOCK_PATH = Pathname('.gem_rbs.lock.yaml')
-
-  DEFAULT_SOURCE = 'ruby/gem_rbs'
-  DEFAULT_BRANCH = 'main'
 
   # Format:
   #   source: ruby/gem_rbs
@@ -19,6 +14,12 @@ module GemRbsCli
   #       files: # lockfile only
   #         - path/to/file.rbs
   class Config
+    CONFIG_PATH = Pathname('.gem_rbs.yaml')
+    LOCK_PATH = Pathname('.gem_rbs.lock.yaml')
+
+    DEFAULT_SOURCE = 'ruby/gem_rbs'
+    DEFAULT_BRANCH = 'main'
+
     def self.load_config
       return unless CONFIG_PATH.exist?
 
@@ -57,6 +58,14 @@ module GemRbsCli
 
         block.call Gem.new(name: name, version: version, source: source, branch: branch, files: files)
       end
+    end
+
+    def add_gem(gem)
+      @config['gems'] << gem
+    end
+
+    def dump_to(path)
+      path.write(YAML.dump(@config))
     end
   end
 end
