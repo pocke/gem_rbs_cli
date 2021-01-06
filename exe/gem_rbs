@@ -1,0 +1,6 @@
+#!ruby
+
+$LOAD_PATH << File.join(__dir__, "../lib")
+require "gem_rbs_cli"
+
+GemRbsCli::CLI.new(ARGV).run
