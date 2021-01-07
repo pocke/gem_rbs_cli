@@ -1,5 +1,12 @@
 module GemRbsCli
   class CLI
+    def self.run(argv)
+      new(argv).run
+    rescue Errors::Error => ex
+      $stderr.puts ex
+      exit 1
+    end
+
     def initialize(argv)
       @argv = argv
     end
@@ -16,9 +23,6 @@ module GemRbsCli
         help
         exit 1
       end
-    rescue Errors::Error => ex
-      $stderr.puts ex
-      exit 1
     end
 
     def run_install
@@ -33,7 +37,7 @@ module GemRbsCli
       token = github_token
       raise Errors::Error.new("gem_rbs update needs GITHUB_TOKEN environment variable") unless token
 
-      Updater.new(config: config!, github_token: github_token).run
+      Installer.new(config: config!, lock: nil, github_token: token).run
     end
 
     private def command
