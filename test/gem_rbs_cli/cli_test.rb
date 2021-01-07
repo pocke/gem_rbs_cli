@@ -21,7 +21,7 @@ class CliTest < Minitest::Test
   def test_install_from_config
     TestHelper.mktmpdir do |dir|
       dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
-      GemRbsCli::CLI.new(['install']).run_install
+      GemRbsCli::CLI.new(['install']).run
 
       assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/activesupport-generated.rbs').exist?
       assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/patch.rbs').exist?
@@ -36,7 +36,7 @@ class CliTest < Minitest::Test
       TestHelper.mktmpdir do |dir|
         dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
         
-        ex = assert_raises { GemRbsCli::CLI.new(['install']).run_install }
+        ex = assert_raises { GemRbsCli::CLI.new(['install']).run }
         assert ex.is_a?(GemRbsCli::Errors::Error)
         assert_equal 'You must need to specify GITHUB_TOKEN', ex.message
       end
@@ -48,7 +48,7 @@ class CliTest < Minitest::Test
       dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
       dir.join(GemRbsCli::Config::LOCK_PATH).write(LOCK)
 
-      GemRbsCli::CLI.new(['install']).run_install
+      GemRbsCli::CLI.new(['install']).run
 
       assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/activesupport-generated.rbs').exist?
       assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/patch.rbs').exist?
@@ -61,10 +61,53 @@ class CliTest < Minitest::Test
         dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
         dir.join(GemRbsCli::Config::LOCK_PATH).write(LOCK)
 
-        GemRbsCli::CLI.new(['install']).run_install
+        GemRbsCli::CLI.new(['install']).run
 
         assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/activesupport-generated.rbs').exist?
         assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/patch.rbs').exist?
+      end
+    end
+  end
+
+  def test_update_without_lock
+    TestHelper.mktmpdir do |dir|
+      dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
+
+      GemRbsCli::CLI.new(['update']).run
+
+      assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/activesupport-generated.rbs').exist?
+      assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/patch.rbs').exist?
+
+      lock = YAML.load(dir.join('.gem_rbs.lock.yaml').read)
+      assert_equal YAML.load(LOCK), lock
+    end
+  end
+
+  def test_update_with_lock
+    TestHelper.mktmpdir do |dir|
+      dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
+      dir.join(GemRbsCli::Config::LOCK_PATH).write(<<~YAML)
+        gems: []
+      YAML
+
+      GemRbsCli::CLI.new(['update']).run
+
+      assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/activesupport-generated.rbs').exist?
+      assert dir.join('gem_rbs/gems/activesupport/6.0.3.2/patch.rbs').exist?
+
+      lock = YAML.load(dir.join('.gem_rbs.lock.yaml').read)
+      assert_equal YAML.load(LOCK), lock
+    end
+  end
+
+  def test_update_without_token
+    TestHelper.without_token do
+      TestHelper.mktmpdir do |dir|
+        dir.join(GemRbsCli::Config::CONFIG_PATH).write(CONFIG)
+
+        ex = assert_raises { GemRbsCli::CLI.new(['update']).run }
+        assert ex.is_a?(GemRbsCli::Errors::Error)
+        assert_equal 'gem_rbs update needs GITHUB_TOKEN environment variable', ex.message
       end
     end
   end
